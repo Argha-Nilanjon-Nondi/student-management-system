@@ -2,24 +2,55 @@
 
 class Student{
     public function student_info(){
-        $objValidation= new Validation();
-
         $studentid=$this->userid;
     
         $objDatabase=new Database();
         $objDatabase->getConnection();
-        $objDatabase->sql="SELECT userid,username,roll FROM students WHERE userid='$studentid';";
+        $objDatabase->sql="SELECT userid,username,roll,class,section,contactno FROM students WHERE userid='$studentid';";
+        $data=array();
+        $data["code"]="2083";
+        $data["message"]="Student profile is retrieved";
+        $studentdata=$objDatabase->runSql()[0];
+        $studentid=$studentdata["userid"];
+
+        $objDatabase->sql="SELECT email FROM users WHERE userid='$studentid'; ";
+        $studentemail=$objDatabase->runSql()[0]["email"];
+
         $data=array();
         $data["code"]="2043";
-        $data["message"]="Student list is retrieved";
-        $data["profile"]=$objDatabase->runSql();
+        $data["message"]="Student profile is retrieved";
+        $studentdata["email"]=$studentemail;
+        $data["data"]=$studentdata;
+        echo json_encode($data);    
+    }
+
+    public function getCheckAndBreakList(){
+        $studentid=$this->userid;
     
-        $studentid=$data["profile"][0]["userid"];
-        $objDatabase->sql="SELECT workdate,checkin,checkout,presenttype FROM checks WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
-        $data["checks"]=$objDatabase->runSql();
-        $objDatabase->sql="SELECT workdate,timetext,reason FROM breaks WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
-        $data["breaks"]=$objDatabase->runSql();
-        echo json_encode($data);     
+        $objDatabase=new Database();
+        $objDatabase->getConnection();
+        $data=array();
+        $data["code"]="2043";
+        $data["message"]="Student check list is retrieved";
+        $objDatabase->sql="SELECT workdate,checkin,checkout,presenttype FROM checks  WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
+        $data["data"]["checks"]=$objDatabase->runSql();
+        $objDatabase->sql="SELECT workdate,timetext,reason,status FROM breaks WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
+        $data["data"]["breaks"]=$objDatabase->runSql();
+        echo json_encode($data); 
+    }
+
+
+    public function breaks_list(){
+        $studentid=$this->userid;
+    
+        $objDatabase=new Database();
+        $objDatabase->getConnection();
+        $data=array();
+        $data["code"]="2043";
+        $data["message"]="Student break list is retrieved";
+        $objDatabase->sql="SELECT workdate,timetext,reason,status FROM breaks WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
+        $data["data"]["breaks"]=$objDatabase->runSql();
+        echo json_encode($data); 
     }
 
     public function request_break(){
@@ -64,9 +95,18 @@ class Student{
             return 0;
           }
 
+
+          if($objValidation->isBreakExist($studentid,$date)==true){
+            $data=array();
+            $data["code"]="3027";
+            $data["message"]="Requested break time is already exist";
+            echo json_encode($data);
+            return 0;
+          }
+
         $objDatabase=new Database();
         $objDatabase->getConnection();
-        $objDatabase->sql=" INSERT breaks(userid,workdate,timetext,reason) VALUES('$studentid','$date','$time','$reason');";
+        $objDatabase->sql=" INSERT breaks(userid,workdate,timetext,reason,status) VALUES('$studentid','$date','$time','$reason','pending');";
         $objDatabase->runSql();
         $data=array();
         $data["code"]="2047";
@@ -116,7 +156,7 @@ class Student{
 
         $objDatabase=new Database();
         $objDatabase->getConnection();
-        $objDatabase->sql=" DELETE FROM breaks WHERE workdate='$date' AND timetext='$time' AND userid='$studentid' ;";
+        $objDatabase->sql=" DELETE FROM breaks WHERE workdate='$date' AND timetext='$time' AND status='pending' AND userid='$studentid' ;";
         $objDatabase->runSql();
         $data=array();
         $data["code"]="2097";

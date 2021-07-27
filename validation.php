@@ -6,7 +6,6 @@ header('Access-Control-Max-Age: 1000');
 header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token , Authorization');
 require_once("./api/database.php");
 require_once("./api/validation.php");
-require_once("./api/login.php");
 if($_SERVER["REQUEST_METHOD"]!="POST"){
     $data=array();
     $data["code"]="3001";
@@ -17,38 +16,41 @@ if($_SERVER["REQUEST_METHOD"]!="POST"){
 $json = file_get_contents('php://input');
 $json_data=json_decode($json,true);
 if(
-    (isset($json_data["email"])==false) ||
-    (isset($json_data["password"])==false) ||
-    (empty($json_data["email"])==true) ||
-    (empty($json_data["password"])==true)
+    (isset($json_data["token"])==false) ||
+    (empty($json_data["token"])==true)  ||
+    (isset($json_data["usertype"])==false) ||
+    (empty($json_data["usertype"])==true)
  ){
     
   $data=array();
   $data["code"]="3002";
-  $data["message"]="Required fields are not found";
+  $data["message"]="Required fields are not found ";
   echo json_encode($data);
   exit();
        
 }
 
-$email=$json_data["email"];
-$password=$json_data["password"];
+$token=$json_data["token"];
+$usertype=$json_data["usertype"];
 
 $objValidation=new Validation();
 if(
-    ($objValidation->validEmail($email)==false) || 
-    ($objValidation->validPassword($password)==false)
+    ($objValidation->ValidTokenWithUsertype($token,$usertype)==false)
  ){
     $data=array();
     $data["code"]="3003";
-    $data["message"]="Email or Password is not valid";
+    $data["message"]="Token is not valid";
+    echo json_encode($data);
+    exit();
+}
+if(
+    ($objValidation->ValidToken($token)==true)
+ ){
+    $data=array();
+    $data["code"]="2300";
+    $data["message"]="Token is valid";
     echo json_encode($data);
     exit();
 }
 
-$objLogin=new Login();
-$objLogin->email=$email;
-$objLogin->password=$password;
-$objLogin->logmein();
 
-?>

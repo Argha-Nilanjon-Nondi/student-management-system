@@ -7,7 +7,7 @@ class Teacher{
     $data=array();
     $data["code"]="2047";
     $data["message"]="Teacher profile is retrieved";
-    $data["data"]=$objDatabase->runSql();
+    $data["data"]=$objDatabase->runSql()[0];
     echo json_encode($data);     
   } 
   public function student_profile(){
@@ -39,17 +39,60 @@ class Teacher{
 
     $objDatabase=new Database();
     $objDatabase->getConnection();
+
+    $objDatabase->sql="SELECT userid,username,roll,contactno FROM students WHERE class='$class' AND section='$section' AND roll=$roll;";
+    $studentdata=$objDatabase->runSql()[0];
+    $studentid=$studentdata["userid"];
+
+    $objDatabase->sql="SELECT email FROM users WHERE userid='$studentid'; ";
+    $studentemail=$objDatabase->runSql()[0]["email"];
+
+    $data=array();
+    $data["code"]="2043";
+    $data["message"]="Student profile is retrieved";
+    $studentdata["email"]=$studentemail;
+    $data["data"]=$studentdata;
+    echo json_encode($data); 
+  }  
+
+  public function student_profile_checklist(){
+    $objValidation= new Validation();
+    $classandsection=$objValidation->IdtoClassSection($this->userid);
+    $class=$classandsection[0];
+    $section=$classandsection[1];
+
+    if(
+      (isset($this->data["roll"])==false) ||
+      (empty($this->data["roll"])==true) 
+    ){
+      $data=array();
+      $data["code"]="3002";
+      $data["message"]="Required fields are not found";
+      echo json_encode($data);
+      return 0;
+    }
+
+    $roll=$this->data["roll"];
+
+    if($objValidation->isRollExist($class,$section,$roll)==false){
+      $data=array();
+      $data["code"]="3018";
+      $data["message"]="Roll does not exist";
+      echo json_encode($data);
+      return 0;
+    }  
+
+    $objDatabase=new Database();
+    $objDatabase->getConnection();
     $objDatabase->sql="SELECT userid,username,roll FROM students WHERE class='$class' AND section='$section' AND roll=$roll;";
     $data=array();
     $data["code"]="2043";
-    $data["message"]="Student list is retrieved";
-    $data["profile"]=$objDatabase->runSql();
-
-    $studentid=$data["profile"][0]["userid"];
+    $data["message"]="Student check list is retrieved";
+    $studentid=$objDatabase->runSql()[0]["userid"];
     $objDatabase->sql="SELECT workdate,checkin,checkout,presenttype FROM checks  WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
-    $data["checks"]=$objDatabase->runSql();
-    $objDatabase->sql="SELECT workdate,timetext,reason FROM breaks WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
-    $data["breaks"]=$objDatabase->runSql();
+    $data["data"]["checks"]=$objDatabase->runSql();
+    $objDatabase->sql="SELECT workdate,timetext,reason,status FROM breaks WHERE userid='$studentid' ORDER BY DATE(workdate) DESC";
+    $data["data"]["breaks"]=$objDatabase->runSql();
     echo json_encode($data); 
   }  
 
@@ -206,22 +249,24 @@ class Teacher{
 
 
       if(
-        (isset($this->data["roll"])==true) &&
-        (empty($this->data["roll"])==false)
+        (isset($this->data["oldroll"])==true) &&
+        (empty($this->data["oldroll"])==false) &&
+        (isset($this->data["newroll"])==true) &&
+        (empty($this->data["newroll"])==false)
         ){
-          $roll=$this->data["roll"];
-          if($objValidation->isRollExist($class,$section,$roll)==true){
-            $data=array();
-            $data["code"]="3018";
-            $data["message"]="Roll is already exist";
-            echo json_encode($data);
-            return 0;
-          }
-      
-          $this->update_column("students","roll",$roll,$userid);
-    
+          $oldroll=$this->data["oldroll"];
+          $newroll=$this->data["newroll"];
+          if($oldroll!=$newroll){
+               if(($objValidation->isRollExist($class,$section,$newroll)==true)){
+                 $data=array();
+                 $data["code"]="3018";
+                 $data["message"]="Roll is already exist";
+                 echo json_encode($data);
+                 return 0;
+               }
+                 $this->update_column("students","roll",$newroll,$userid);
+             }
         }
-
       
        $data=array();
         $data["code"]="2063";
@@ -319,8 +364,7 @@ class Teacher{
     $workdate=$this->data["date"];
     $checkin=$this->data["checkin"];
     $roll=$this->data["roll"];
-    $studentid=$objValidation->rollToId($class,$section,$roll);
-    $presenttype=$this->data["presenttype"];
+
 
     if($objValidation->isRollExist($class,$section,$roll)==false){
       $data=array();
@@ -329,6 +373,10 @@ class Teacher{
       echo json_encode($data);
       return 0;
     }  
+
+
+    $studentid=$objValidation->rollToId($class,$section,$roll);
+    $presenttype=$this->data["presenttype"];
 
 
     if($objValidation->validDate($workdate)==false){
@@ -364,7 +412,7 @@ class Teacher{
     if(count($sqlRep)!=0){
        $data=array();
        $data["code"]="3060";
-       $data["message"]="Working date is already exist";
+       $data["message"]="Working date is already exist for that roll";
        echo json_encode($data);
        return 0;
      }
@@ -409,9 +457,6 @@ class Teacher{
     $workdate=$this->data["date"];
     $checkout=$this->data["checkout"];
     $roll=$this->data["roll"];
-    $studentid=$objValidation->rollToId($class,$section,$roll);
-
-
     if($objValidation->isRollExist($class,$section,$roll)==false){
       $data=array();
       $data["code"]="3018";
@@ -420,6 +465,9 @@ class Teacher{
       return 0;
     }  
 
+    $studentid=$objValidation->rollToId($class,$section,$roll);
+
+ 
 
     if($objValidation->validDate($workdate)==false){
       $data=array();
@@ -488,7 +536,6 @@ class Teacher{
 
     $workdate=$this->data["date"];
     $roll=$this->data["roll"];
-    $studentid=$objValidation->rollToId($class,$section,$roll);
 
 
     if($objValidation->isRollExist($class,$section,$roll)==false){
@@ -497,7 +544,20 @@ class Teacher{
       $data["message"]="Roll does not exist";
       echo json_encode($data);
       return 0;
-    }  
+    } 
+
+
+    if($objValidation->validDate($workdate)==false){
+      $data=array();
+      $data["code"]="3031";
+      $data["message"]="Checkin date is not valid";
+      echo json_encode($data);
+      return 0;
+     }
+
+
+    $studentid=$objValidation->rollToId($class,$section,$roll);
+ 
      
     $objDatabase=new Database();
     $objDatabase->getConnection();
@@ -594,7 +654,6 @@ class Teacher{
 
     $workdate=$this->data["date"];
     $roll=$this->data["roll"];
-    $studentid=$objValidation->rollToId($class,$section,$roll);
 
 
     if($objValidation->isRollExist($class,$section,$roll)==false){
@@ -603,8 +662,8 @@ class Teacher{
       $data["message"]="Roll does not exist";
       echo json_encode($data);
       return 0;
-    }  
-
+    }      
+    $studentid=$objValidation->rollToId($class,$section,$roll);
 
     if($objValidation->validDate($workdate)==false){
       $data=array();
@@ -635,6 +694,98 @@ class Teacher{
     $data["code"]="2036";
     $data["message"]="Check is deleted";
     echo json_encode($data);   
+   }
+
+   public function breaks_list(){
+    $objValidation= new Validation();
+    $classandsection=$objValidation->IdtoClassSection($this->userid);
+    $class=$classandsection[0];
+    $section=$classandsection[1];
+
+    $objDatabase=new Database();
+    $objDatabase->getConnection();
+    $objDatabase->sql="SELECT students.roll,breaks.workdate,breaks.reason,breaks.timetext,breaks.status FROM students,breaks WHERE students.userid=breaks.userid AND students.class='$class' AND students.section='$section' ORDER BY breaks.workdate DESC";
+    $studentsbreakdata=$objDatabase->runSql();
+
+    $data=array();
+    $data["code"]="2022";
+    $data["message"]="Breaks is retrieved";
+    $data["data"]=$studentsbreakdata;
+    echo json_encode($data); 
+   }
+
+   public function change_break_status(){
+        $objValidation=new Validation();
+        if(
+           (isset($this->data["date"])==false) ||
+           (empty($this->data["date"])==true) ||
+           (isset($this->data["roll"])==false) ||
+           (empty($this->data["roll"])==true) ||
+           (isset($this->data["status"])==false) ||
+           (empty($this->data["status"])==true)
+          ){
+          $data=array();
+          $data["code"]="3002";
+          $data["message"]="Required fields are not found";
+          echo json_encode($data);
+          return 0;
+        }  
+
+        $avaliable_status=array("accept","reject");
+        $status=$this->data["status"];
+
+        if($objValidation->validValues($avaliable_status,$status)==false){
+          $data=array();
+          $data["code"]="3031";
+          $data["message"]="Status is not valid";
+          echo json_encode($data);
+          return 0;
+        }
+
+        $breakdate=$this->data["date"];
+        $roll=$this->data["roll"];
+
+        $teacherid=$this->userid;
+        $classandsection=$objValidation->IdtoClassSection($teacherid);
+        $class=$classandsection[0];
+        $section=$classandsection[1];
+
+        if($objValidation->isRollExist($class,$section,$roll)==false){
+          $data=array();
+          $data["code"]="3018";
+          $data["message"]="Roll does not exist";
+          echo json_encode($data);
+          return 0;
+        } 
+
+        if($objValidation->validDate($breakdate)==false){
+          $data=array();
+          $data["code"]="3091";
+          $data["message"]="Break date is not valid";
+          echo json_encode($data);
+          return 0;
+        }
+        $studentid=$objValidation->rollToId($class,$section,$roll);
+
+
+        if($objValidation->isBreakExist($studentid,$breakdate)==false){
+            $data=array();
+            $data["code"]="3017";
+            $data["message"]="Requested break time is not exist";
+            echo json_encode($data);
+            return 0;
+          }
+          
+        $objDatabase=new Database();
+        $objDatabase->getConnection();
+
+        $objDatabase->sql=" UPDATE breaks SET `status`='$status' WHERE userid='$studentid' AND workdate='$breakdate' ";
+        $sqlRep=$objDatabase->runSql();
+
+        $data=array();
+        $data["code"]="2026";
+        $data["message"]="Break status is updated";
+        echo json_encode($data);  
    }
 }
 

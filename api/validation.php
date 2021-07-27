@@ -36,6 +36,18 @@
      return true;
   }
 
+
+  public function ValidTokenWithUsertype($token,$usertype){
+    $obj=new Database();
+    $obj->getConnection();
+     $obj->sql="SELECT userid FROM users WHERE token='$token' and usertype='$usertype' ";
+     $sqlRep=$obj->runSql();
+     if(count($sqlRep)==0){
+       return false;
+     }
+     return true;
+  }
+
   public function ValidToken($token){
     $obj=new Database();
     $obj->getConnection();
@@ -50,9 +62,25 @@
   public function tokenToId($token){
     $obj=new Database();
     $obj->getConnection();
-     $obj->sql="SELECT userid FROM users WHERE token='".$token."'";
+     $obj->sql="SELECT userid FROM users WHERE token='$token'";
      $sqlRep=$obj->runSql();
      return $sqlRep[0]["userid"];
+  }
+
+  public function tokenToEmail($token){
+    $obj=new Database();
+    $obj->getConnection();
+     $obj->sql="SELECT email FROM users WHERE token='$token'";
+     $sqlRep=$obj->runSql();
+     return $sqlRep[0]["email"];
+  }
+
+  public function IdtoEmail($userid){
+    $obj=new Database();
+    $obj->getConnection();
+     $obj->sql="SELECT email FROM users WHERE userid='$userid'";
+     $sqlRep=$obj->runSql();
+     return $sqlRep[0]["email"];
   }
 
 
@@ -116,12 +144,36 @@
   public function isIdExist($userid){
     $objDatabase=new Database();
     $objDatabase->getConnection();
-     $objDatabase->sql="SELECT userid FROM profiles WHERE userid='".$userid."'";
+     $objDatabase->sql="SELECT userid FROM users WHERE userid='$userid'";
      $sqlRep=$objDatabase->runSql();
      if(count($sqlRep)==0){
        return false;
      }
      return true;
+  }
+
+
+  public function isBreakExist($userid,$breakdate){
+    $objDatabase=new Database();
+    $objDatabase->getConnection();
+     $objDatabase->sql="SELECT userid FROM breaks WHERE userid='$userid' AND workdate='$breakdate' ";
+     $sqlRep=$objDatabase->runSql();
+     if(count($sqlRep)==0){
+       return false;
+     }
+     return true;
+  }
+
+
+  public function validClassForTeacher($class,$section){
+    $objDatabase=new Database();
+    $objDatabase->getConnection();
+     $objDatabase->sql="SELECT userid FROM teachers WHERE class='$class' AND section='$section';";
+     $sqlRep=$objDatabase->runSql();
+     if(count($sqlRep)==0){
+       return true;
+     }
+     return false;
   }
 
 
@@ -178,6 +230,17 @@
   public function validTime($time){
     return strtotime($time);
 }
+
+    public function validEmailAndPassword($email,$password){
+      $objDatabase=new Database();
+      $objDatabase->getConnection();
+      $objDatabase->sql="SELECT token FROM users WHERE email='$email' AND password=SHA2('$password',256);";
+      $sqlRep=$objDatabase->runSql();
+      if(count($sqlRep)==0){
+          return false;
+      }
+       return true;
+    }
 
   }
 

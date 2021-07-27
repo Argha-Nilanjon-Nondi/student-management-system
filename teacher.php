@@ -1,6 +1,9 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json;");
+header("Content-Type: application/json");
+header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
+header('Access-Control-Max-Age: 1000');
+header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token , Authorization');
 require_once("./api/database.php");
 require_once("./api/validation.php");
 require_once("./api/admin.php");
@@ -77,9 +80,12 @@ $avaliadle_action=array("add-student",
      "update-check",
      "delete-check",
      "student-profile",
+     "student-checklist",
+     "student-breaklist",
      "student-update",
      "student-delete",
-     "own-profile"
+     "own-profile",
+     "update-break"
 );
 
 if(
@@ -112,6 +118,15 @@ if($action=="student-profile"){
     $objTeacher->student_profile();
 }
 
+if($action=="student-checklist"){
+    $objTeacher->student_profile_checklist();
+}
+
+if($action=="student-breaklist"){
+    $objTeacher->breaks_list();
+}
+
+
 if($action=="student-update"){
     $objTeacher->student_update();
 }
@@ -134,6 +149,10 @@ if($action=="update-check"){
 
 if($action=="delete-check"){
     $objTeacher->delete_check();
+}
+
+if($action=="update-break"){
+    $objTeacher->change_break_status();
 }
 
 ?>

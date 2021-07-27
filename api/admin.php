@@ -42,7 +42,7 @@ class Admin{
     $data=array();
     $data["code"]="2047";
     $data["message"]="Teacher profile is retrieved";
-    $data["data"]=$objDatabase->runSql();
+    $data["data"]=$objDatabase->runSql()[0];
     echo json_encode($data);     
   } 
     public function add_teacher(){
@@ -68,15 +68,13 @@ class Admin{
           return 0;
         }
 
+        require_once("./api/config.php");
         $email=$this->data["email"];
         $password=$this->data["password"];
         $username=$this->data["username"];
         $class=$this->data["class"];
         $secion=$this->data["section"];
         $contactno=$this->data["contactno"];
-
-        
-        require_once("./api/config.php");
 
         if(($objValidation->validEmail($email)==false) || 
           ($objValidation->validPassword($password)==false) || 
@@ -95,6 +93,14 @@ class Admin{
             $data=array();
             $data["code"]="3008";
             $data["message"]="Email is already exist";
+            echo json_encode($data);
+            return 0;
+          }
+
+          if(($objValidation->validClassForTeacher($class,$this->data["section"]))==false){
+            $data=array();
+            $data["code"]="3000";
+            $data["message"]="Section is not valid";
             echo json_encode($data);
             return 0;
           }
@@ -266,7 +272,8 @@ class Admin{
          (empty($this->data["section"])==false)
          ){
           $section=$this->data["section"];
-          if($objValidation->validValues($avaliable_section,$section)==false)
+          if($objValidation->validValues($avaliable_section,$section)==false ||
+          ($objValidation->validClassForTeacher($this->data["class"],$this->data["section"]))==false)
            {
             $data=array();
             $data["code"]="3073";
@@ -350,8 +357,10 @@ class Admin{
       if(
         (isset($this->data["email"])==false) ||
         (isset($this->data["password"])==false) ||
+        (isset($this->data["new-password"])==false) ||
         (empty($this->data["email"])==true) ||
-        (empty($this->data["password"])==true)
+        (empty($this->data["password"])==true) ||
+        (empty($this->data["new-password"])==true)
         ){
         
          $data=array();
@@ -364,6 +373,7 @@ class Admin{
 
       $email=$this->data["email"];
       $password=$this->data["password"];
+      $new_password=$this->data["new-password"];
       if(
           ($objValidation->validEmail($email)==false) || 
           ($objValidation->validPassword($password)==false)
@@ -381,15 +391,29 @@ class Admin{
           echo json_encode($data);
           return 0;
         }
-        $randnum=strval(mt_rand());
+
+        
         $objDatabase=new Database();
         $objDatabase->getConnection();
-        $objDatabase->sql="UPDATE users set password=SHA2('$password',256) , token=SHA2('$randnum',256)  WHERE email='$email';";
+
+
+        if($objValidation->validEmailAndPassword($email,$password)==false){
+            $data=array();
+            $data["code"]="3000";
+            $data["message"]="Crediantials are not correct";
+            echo json_encode($data);
+            return 0;
+        }
+
+
+        $randnum=strval(mt_rand());
+        $objDatabase->sql="UPDATE users set password=SHA2('$new_password',256) , token=SHA2('$randnum',256)  WHERE email='$email';";
         $objDatabase->runSql();
         $data=array();
         $data["code"]="2099";
         $data["message"]="Password is changed";
         echo json_encode($data);
+        return 0;
     }
   
 

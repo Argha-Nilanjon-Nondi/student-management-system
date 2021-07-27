@@ -1,6 +1,9 @@
 <?php
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json;");
+header("Content-Type: application/json");
+header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
+header('Access-Control-Max-Age: 1000');
+header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token , Authorization');
 require_once("./api/database.php");
 require_once("./api/validation.php");
 require_once("./api/student.php");
@@ -69,7 +72,9 @@ if(
 $avaliadle_action=array(
     "student-info",
     "request-break",
-    "delete-break"   
+    "delete-break" ,
+    "student-checkbreaklist",
+    "student-breaklist"
 );
 
 if(
@@ -96,6 +101,15 @@ if($action=="request-break"){
 
 if($action=="delete-break"){
     $objStudent->delete_break();
+}
+
+if($action=="student-checkbreaklist"){
+    $objStudent->getCheckAndBreakList();
+}
+
+
+if($action=="student-breaklist"){
+    $objStudent->breaks_list();
 }
 
 
