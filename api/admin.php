@@ -268,20 +268,27 @@ class Admin{
        }
 
       if(
-         (isset($this->data["section"])==true) &&
-         (empty($this->data["section"])==false)
+         (isset($this->data["old-section"])==true) &&
+         (empty($this->data["old-section"])==false) &&
+         (isset($this->data["new-section"])==true) &&
+         (empty($this->data["new-section"])==false)
          ){
-          $section=$this->data["section"];
-          if($objValidation->validValues($avaliable_section,$section)==false ||
-          ($objValidation->validClassForTeacher($this->data["class"],$this->data["section"]))==false)
-           {
-            $data=array();
-            $data["code"]="3073";
-            $data["message"]="Section is not valid";
-            echo json_encode($data);
-            return 0;
+          $new_section=$this->data["new-section"];
+          $old_section=$this->data["old-section"];
+          if(($this->data["old-section"])!=($this->data["new-section"])){
+              if(
+                 ($objValidation->validValues($avaliable_section,$old_section)==false) ||
+                 ($objValidation->validValues($avaliable_section,$new_section)==false) ||
+                 ($objValidation->validClassForTeacher($this->data["class"],$this->data["new-section"])==false)
+               ){
+                $data=array();
+                $data["code"]="3073";
+                $data["message"]="Section is not valid";
+                echo json_encode($data);
+                return 0;
+              }
+              $this->update_column("teachers","section",$new_section,$userid);
           }
-          $this->update_column("teachers","section",$section,$userid);
         }
 
 
