@@ -73,7 +73,8 @@ JSON:{
   "data":{
     "userid":"667566",
     "username":"Nilanjon Nondi",
-    "section":"B",
+    "old-section":"B",
+    "new-section":"B",
     "contactno":"+8801715743000"
   }
 }
