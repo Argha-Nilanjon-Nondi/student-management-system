@@ -24,7 +24,7 @@ class Admin{
         $data["code"]="3051";
         $data["message"]="Id is not valid";
         echo json_encode($data); 
-        exit();
+        return 0;
     }
 
     if(
@@ -228,7 +228,7 @@ class Admin{
           $data["code"]="3002";
           $data["message"]="Required fields are not found ";
           echo json_encode($data);
-          exit();
+          return 0;
         }
 
       $userid=$this->data["userid"];
@@ -242,7 +242,7 @@ class Admin{
           $data["code"]="3009";
           $data["message"]="ID is not teacher";
           echo json_encode($data); 
-          exit();
+          return 0;
       }
 
       if(
@@ -338,7 +338,7 @@ class Admin{
           $data["code"]="3051";
           $data["message"]="Id is not valid";
           echo json_encode($data); 
-          exit();
+          return 0;
       }
 
       $objDatabase=new Database();

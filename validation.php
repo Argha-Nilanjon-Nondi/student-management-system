@@ -6,12 +6,13 @@ header('Access-Control-Max-Age: 1000');
 header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token , Authorization');
 require_once("./api/database.php");
 require_once("./api/validation.php");
+function validation_at_first(){
 if($_SERVER["REQUEST_METHOD"]!="POST"){
     $data=array();
     $data["code"]="3001";
     $data["message"]="Requests must be POST";
     echo json_encode($data);
-    exit();
+    return 0;
 }
 $json = file_get_contents('php://input');
 $json_data=json_decode($json,true);
@@ -26,7 +27,7 @@ if(
   $data["code"]="3002";
   $data["message"]="Required fields are not found ";
   echo json_encode($data);
-  exit();
+  return 0;
        
 }
 
@@ -41,7 +42,7 @@ if(
     $data["code"]="3003";
     $data["message"]="Token is not valid";
     echo json_encode($data);
-    exit();
+    return 0;
 }
 if(
     ($objValidation->ValidToken($token)==true)
@@ -50,7 +51,9 @@ if(
     $data["code"]="2300";
     $data["message"]="Token is valid";
     echo json_encode($data);
-    exit();
+    return 0;
 }
+}
+validation_at_first();
 
-
+?>

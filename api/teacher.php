@@ -499,6 +499,16 @@ class Teacher{
        return 0;
      }
 
+     $objDatabase->sql="SELECT workdate FROM checks WHERE workdate='$workdate' AND userid='$studentid' AND presenttype='AB'; ";
+    $sqlRep=$objDatabase->runSql();
+    if(count($sqlRep)>0){
+       $data=array();
+       $data["code"]="3067";
+       $data["message"]="Student is absent";
+       echo json_encode($data);
+       return 0;
+     }
+
     $objDatabase->sql=" UPDATE checks SET checkout='$checkout' WHERE workdate='$workdate' AND userid='$studentid'; ";
     $sqlRep=$objDatabase->runSql();
 

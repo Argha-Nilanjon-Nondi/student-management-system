@@ -7,12 +7,13 @@ header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token , Autho
 require_once("./api/database.php");
 require_once("./api/validation.php");
 require_once("./api/student.php");
+function validation_at_first(){
 if($_SERVER["REQUEST_METHOD"]!="POST"){
     $data=array();
     $data["code"]="3001";
     $data["message"]="Requests must be POST";
     echo json_encode($data);
-    exit();
+    return 0;
 }
 $json = file_get_contents('php://input');
 $json_data=json_decode($json,true);
@@ -28,7 +29,7 @@ if(
   $data["code"]="3002";
   $data["message"]="Required fields are not found ";
   echo json_encode($data);
-  exit();
+  return 0;
        
 }
 
@@ -44,7 +45,7 @@ if(
     $data["code"]="3003";
     $data["message"]="Token is not valid";
     echo json_encode($data);
-    exit();
+    return 0;
 }
 
 $userid=$objValidation->tokenToId($token);
@@ -56,7 +57,7 @@ if(
       $data["code"]="3051";
       $data["message"]="Id is not valid";
       echo json_encode($data); 
-      exit();
+      return 0;
 }
 
 if(
@@ -66,7 +67,7 @@ if(
     $data["code"]="3009";
     $data["message"]="You are not student";
     echo json_encode($data); 
-    exit();
+    return 0;
 }
 
 $avaliadle_action=array(
@@ -84,7 +85,7 @@ if(
     $data["code"]="3006";
     $data["message"]="Can not find requested action";
     echo json_encode($data); 
-   exit();
+   return 0;
 }
 
 $objStudent=new Student();
@@ -111,6 +112,9 @@ if($action=="student-checkbreaklist"){
 if($action=="student-breaklist"){
     $objStudent->breaks_list();
 }
+
+}
+validation_at_first();
 
 
 ?>

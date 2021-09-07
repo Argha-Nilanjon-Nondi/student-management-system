@@ -7,12 +7,13 @@ header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token , Autho
 require_once("./api/database.php");
 require_once("./api/validation.php");
 require_once("./api/common.php");
+function validation_at_first(){
 if($_SERVER["REQUEST_METHOD"]!="POST"){
     $data=array();
     $data["code"]="3001";
     $data["message"]="Requests must be POST";
     echo json_encode($data);
-    exit();
+    return 0;
 }
 $json = file_get_contents('php://input');
 $json_data=json_decode($json,true);
@@ -27,7 +28,7 @@ if(
   $data["code"]="3002";
   $data["message"]="Required fields are not found ";
   echo json_encode($data);
-  exit();
+  return 0;
        
 }
 
@@ -47,7 +48,7 @@ if(
     $data["code"]="3006";
     $data["message"]="Can not find requested action";
     echo json_encode($data); 
-   exit();
+   return 0;
 }
 
 $objCommon=new Common();
@@ -56,6 +57,9 @@ $objCommon->data=$data;
 if($action=="change-password"){
     $objCommon->change_password();
 }
+
+}
+validation_at_first();
 
 
 ?>
